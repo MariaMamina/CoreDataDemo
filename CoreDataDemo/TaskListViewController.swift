@@ -90,9 +90,7 @@ class TaskListViewController: UITableViewController {
         StorageManager.shared.saveContext()
     }
     private func showEditAlert(with title: String, message: String, and task: Task) {
-        
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        
         let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
             guard let taskName = alert.textFields?.first?.text, !taskName.isEmpty else { return }
             self.saveChange(taskName, and: task)
