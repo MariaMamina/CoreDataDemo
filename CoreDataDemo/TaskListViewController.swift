@@ -10,8 +10,6 @@ import CoreData
 
 class TaskListViewController: UITableViewController {
     
-    private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    
     private let cellID = "cell"
     private var taskList: [Task] = []
 
@@ -59,10 +57,8 @@ class TaskListViewController: UITableViewController {
     }
     
     private func fetchData() {
-        let fetchRequest: NSFetchRequest<Task> = Task.fetchRequest()
-        
         do {
-            taskList = try context.fetch(fetchRequest)
+            taskList = try StorageManager.shared.context.fetch(StorageManager.shared.fetchRequest)
             tableView.reloadData()
         } catch let error {
             print(error.localizedDescription)
@@ -83,21 +79,15 @@ class TaskListViewController: UITableViewController {
     }
     
     private func save(_ taskName: String) {
-        guard let entityDescription = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return }
-        guard let task = NSManagedObject(entity: entityDescription, insertInto: context) as? Task else { return }
+        guard let entityDescription = NSEntityDescription.entity(forEntityName: "Task", in: StorageManager.shared.context) else { return }
+        guard let task = NSManagedObject(entity: entityDescription, insertInto: StorageManager.shared.context) as? Task else { return }
         task.name = taskName
         taskList.append(task)
         
         let cellIndex = IndexPath(row: taskList.count - 1, section: 0)
         tableView.insertRows(at: [cellIndex], with: .automatic)
         
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch let error {
-                print(error.localizedDescription)
-            }
-        }
+        StorageManager.shared.saveContext()
     }
     private func showEditAlert(with title: String, message: String, and task: Task) {
         
@@ -117,16 +107,8 @@ class TaskListViewController: UITableViewController {
     
     private func saveChange(_ taskName: String, and task: Task) {
         task.name = taskName
-        
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch let error {
-                print(error.localizedDescription)
-            }
-        }
+        StorageManager.shared.saveContext()
         fetchData()
-        
     }
 }
 
@@ -152,19 +134,14 @@ extension TaskListViewController{
    
         if editingStyle == .delete {
             let task = taskList[indexPath.row]
-            context.delete(task)
+            StorageManager.shared.context.delete(task)
             
             taskList.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .automatic
             )
         }
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch let error {
-                print(error.localizedDescription)
-            }
-        }
+        StorageManager.shared.saveContext()
+
     }
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let task = taskList[indexPath.row]
